@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 def check_and_install_packages():
     import importlib
-    required_packages = ['aiohttp', 'tqdm', 'certifi']
+    required_packages = ["aiohttp", "tqdm"]
     for package in required_packages:
         try:
             importlib.import_module(package)
@@ -19,12 +19,12 @@ def check_and_install_packages():
 
 check_and_install_packages()
 
+
 import aiohttp
 from tqdm import tqdm
-import certifi
 
 
-logging.basicConfig(level=logging.INFO, format='%(message)s')
+logging.basicConfig(level=logging.INFO, format="%(message)s")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -39,12 +39,19 @@ FLUX_SCHNELL_NAME = "flux1-schnell-fp8.safetensors"
 
 async def download_model(url: str, destination_path: Path):
     try:
-        async with aiohttp.ClientSession(trust_env=True, connector=aiohttp.TCPConnector(ssl=False)) as session:
+        async with aiohttp.ClientSession(
+            trust_env=True, connector=aiohttp.TCPConnector(ssl=False)
+        ) as session:
             async with session.get(url) as response:
                 if response.status == 200:
-                    total_size = int(response.headers.get('Content-Length', 0))
+                    total_size = int(response.headers.get("Content-Length", 0))
                     chunk_size = 1024
-                    with tqdm(total=total_size, unit='iB', unit_scale=True, desc=destination_path.name) as bar:
+                    with tqdm(
+                        total=total_size,
+                        unit="iB",
+                        unit_scale=True,
+                        desc=destination_path.name,
+                    ) as bar:
                         with destination_path.open("wb") as f:
                             async for chunk in response.content.iter_chunked(chunk_size):
                                 f.write(chunk)
@@ -99,6 +106,7 @@ async def main():
         await download_flux_schnell()
     elif choice == "3":
         await asyncio.gather(download_flux_dev(), download_flux_schnell())
+
 
 if __name__ == "__main__":
     asyncio.run(main())
