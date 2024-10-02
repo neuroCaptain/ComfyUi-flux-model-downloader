@@ -25,7 +25,7 @@ from tqdm import tqdm
 
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__)).parent
 
 COMFYUI_DIR = os.path.join(BASE_DIR, "ComfyUI")
 MODEL_CHECKPOINTS_DIR = os.path.join(COMFYUI_DIR, "models", "checkpoints")
