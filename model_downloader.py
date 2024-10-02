@@ -7,6 +7,7 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+
 def check_and_install_packages():
     import importlib
     required_packages = ["aiohttp", "tqdm"]
@@ -17,11 +18,12 @@ def check_and_install_packages():
             logger.info(f"Installing package: {package}")
             subprocess.run(["pip", "install", package])
 
+
 check_and_install_packages()
 
 
-import aiohttp
-from tqdm import tqdm
+import aiohttp  # noqa: E402
+from tqdm import tqdm  # noqa: E402
 
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -39,8 +41,11 @@ FLUX_SCHNELL_NAME = "flux1-schnell-fp8.safetensors"
 
 async def download_model(url: str, destination_path: Path):
     try:
+        timeout = aiohttp.ClientTimeout(total=None)
         async with aiohttp.ClientSession(
-            trust_env=True, connector=aiohttp.TCPConnector(ssl=False)
+            trust_env=True,
+            connector=aiohttp.TCPConnector(ssl=False),
+            timeout=timeout,
         ) as session:
             async with session.get(url) as response:
                 if response.status == 200:
@@ -53,40 +58,50 @@ async def download_model(url: str, destination_path: Path):
                         desc=destination_path.name,
                     ) as bar:
                         with destination_path.open("wb") as f:
-                            async for chunk in response.content.iter_chunked(chunk_size):
+                            async for chunk in response.content.iter_chunked(
+                                chunk_size
+                            ):
                                 f.write(chunk)
                                 bar.update(len(chunk))
                 else:
-                    logger.error(f"Failed to download {url}. Status code: {response.status}")
+                    logger.error(
+                        f"Failed to download {url}. "
+                        f"Status code: {response.status}"
+                    )
     except aiohttp.ClientError as e:
         logger.error(f"Failed to download {url}. Error: {e}")
+    except asyncio.TimeoutError:
+        logger.error(
+            "Download timed out. Please check your internet "
+            "connection and try again."
+        )
 
 
 async def download_flux_dev():
     dest_path = MODEL_CHECKPOINTS_DIR / FLUX_DEV_NAME
     if dest_path.exists():
-        logger.info(f"Flux Dev already downloaded.")
+        logger.info("Flux Dev already downloaded.")
         return
-    logger.info(f"Downloading Flux Dev...")
+    logger.info("Downloading Flux Dev...")
     await download_model(FLUX_DEV_URL, dest_path)
 
 
 async def download_flux_schnell():
     dest_path = MODEL_CHECKPOINTS_DIR / FLUX_SCHNELL_NAME
     if dest_path.exists():
-        logger.info(f"Flux Schnell already downloaded.")
+        logger.info("Flux Schnell already downloaded.")
         return
-    logger.info(f"Downloading Flux Schnell...")
+    logger.info("Downloading Flux Schnell...")
     await download_model(FLUX_SCHNELL_URL, dest_path)
 
 
 async def main():
     if not COMFYUI_DIR.exists():
-        logger.error(f"ComfyUI directory not found.")
+        logger.error("ComfyUI directory not found.")
         return
 
     if not MODEL_CHECKPOINTS_DIR.exists():
-        logger.error(f"Model checkpoints directory not found.")
+        logger.error("Model checkpoints directory not found.")
         return
 
     while True:
