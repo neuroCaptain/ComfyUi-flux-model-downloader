@@ -40,14 +40,14 @@ async def download_model(url: str, destination_path: Path):
     try:
         async with aiohttp.ClientSession(trust_env=True) as session:
             async with session.get(url) as response:
-            if response.status == 200:
-                total_size = int(response.headers.get('Content-Length', 0))
-                chunk_size = 1024
-                with tqdm(total=total_size, unit='iB', unit_scale=True, desc=destination_path.name) as bar:
-                    with destination_path.open("wb") as f:
-                        async for chunk in response.content.iter_chunked(chunk_size):
-                            f.write(chunk)
-                            bar.update(len(chunk))
+                if response.status == 200:
+                    total_size = int(response.headers.get('Content-Length', 0))
+                    chunk_size = 1024
+                    with tqdm(total=total_size, unit='iB', unit_scale=True, desc=destination_path.name) as bar:
+                        with destination_path.open("wb") as f:
+                            async for chunk in response.content.iter_chunked(chunk_size):
+                                f.write(chunk)
+                                bar.update(len(chunk))
                 else:
                     logger.error(f"Failed to download {url}. Status code: {response.status}")
     except aiohttp.ClientError as e:
