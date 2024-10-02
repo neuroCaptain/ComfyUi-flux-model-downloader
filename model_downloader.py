@@ -1,5 +1,3 @@
-# Credits: https://comfyanonymous.github.io/ComfyUI_examples/flux/
-
 import logging
 import asyncio
 import subprocess
@@ -104,18 +102,30 @@ async def main():
         logger.error("Model checkpoints directory not found.")
         return
 
+    flux_dev_exists = (MODEL_CHECKPOINTS_DIR / FLUX_DEV_NAME).exists()
+    flux_schnell_exists = (MODEL_CHECKPOINTS_DIR / FLUX_SCHNELL_NAME).exists()
+
     while True:
-        print(
+        menu = (
             "Select models to download:\n"
             "1. Flux Dev (17.2G)\n"
             "2. Flux Schnell (17.2G)\n"
             "3. All (34.4G)\n"
         )
-        choice = input("Enter your choice (1/2/3): ")
-        if choice in ["1", "2", "3"]:
+        if flux_dev_exists or flux_schnell_exists:
+            menu += "4. Reinstall existing models\n"
+
+        print(menu)
+        if flux_dev_exists or flux_schnell_exists:
+            valid_choices = ["1", "2", "3", "4"]
+        else:
+            valid_choices = ["1", "2", "3"]
+
+        choice = input(f"Enter your choice ({'/'.join(valid_choices)}): ")
+        if choice in valid_choices:
             break
         else:
-            print("Invalid choice. Please enter 1, 2, or 3.")
+            print(f"Invalid choice. Please enter {'/'.join(valid_choices)}.")
 
     if choice == "1":
         await download_flux_dev()
@@ -123,6 +133,17 @@ async def main():
         await download_flux_schnell()
     elif choice == "3":
         await asyncio.gather(download_flux_dev(), download_flux_schnell())
+    elif choice == "4":
+        tasks = []
+        if flux_dev_exists:
+            logger.info("Reinstalling Flux Dev...")
+            (MODEL_CHECKPOINTS_DIR / FLUX_DEV_NAME).unlink()
+            tasks.append(download_flux_dev())
+        if flux_schnell_exists:
+            logger.info("Reinstalling Flux Schnell...")
+            (MODEL_CHECKPOINTS_DIR / FLUX_SCHNELL_NAME).unlink()
+            tasks.append(download_flux_schnell())
+        await asyncio.gather(*tasks)
 
     logger.info("Download completed!")
 
