@@ -105,10 +105,12 @@ async def main():
         return
 
     while True:
-        print("Select models to download:")
-        print("1. Flux Dev (17.2G)")
-        print("2. Flux Schnell (17.2G)")
-        print("3. All (34.4G)")
+        print(
+            "Select models to download:\n"
+            "1. Flux Dev (17.2G)\n"
+            "2. Flux Schnell (17.2G)\n"
+            "3. All (34.4G)\n"
+        )
         choice = input("Enter your choice (1/2/3): ")
         if choice in ["1", "2", "3"]:
             break
@@ -122,6 +124,7 @@ async def main():
     elif choice == "3":
         await asyncio.gather(download_flux_dev(), download_flux_schnell())
 
+    logger.info("Download completed!")
 
 if __name__ == "__main__":
     asyncio.run(main())
