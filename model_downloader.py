@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 def check_and_install_packages():
     import importlib
-    required_packages = ['aiohttp', 'tqdm']
+    required_packages = ['aiohttp', 'tqdm', 'certifi']
     for package in required_packages:
         try:
             importlib.import_module(package)
@@ -21,6 +21,7 @@ check_and_install_packages()
 
 import aiohttp
 from tqdm import tqdm
+import certifi
 
 
 logging.basicConfig(level=logging.INFO, format='%(message)s')
@@ -38,7 +39,7 @@ FLUX_SCHNELL_NAME = "flux1-schnell-fp8.safetensors"
 
 async def download_model(url: str, destination_path: Path):
     try:
-        async with aiohttp.ClientSession(trust_env=True) as session:
+        async with aiohttp.ClientSession(trust_env=True, connector=aiohttp.TCPConnector(ssl=False)) as session:
             async with session.get(url) as response:
                 if response.status == 200:
                     total_size = int(response.headers.get('Content-Length', 0))
