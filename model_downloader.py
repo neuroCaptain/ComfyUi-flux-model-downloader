@@ -1,5 +1,4 @@
 # Credits: https://comfyanonymous.github.io/ComfyUI_examples/flux/
-# Script made by: Neuro Captain
 
 import os
 import logging
