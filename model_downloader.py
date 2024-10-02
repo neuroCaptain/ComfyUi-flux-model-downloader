@@ -1,9 +1,9 @@
 # Credits: https://comfyanonymous.github.io/ComfyUI_examples/flux/
 
-import os
 import logging
 import asyncio
 import subprocess
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -25,10 +25,10 @@ from tqdm import tqdm
 
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__)).parent
+BASE_DIR = Path(__file__).resolve().parent.parent
 
-COMFYUI_DIR = os.path.join(BASE_DIR, "ComfyUI")
-MODEL_CHECKPOINTS_DIR = os.path.join(COMFYUI_DIR, "models", "checkpoints")
+COMFYUI_DIR = BASE_DIR / "ComfyUI"
+MODEL_CHECKPOINTS_DIR = COMFYUI_DIR / "models" / "checkpoints"
 
 FLUX_DEV_URL = "https://huggingface.co/Comfy-Org/flux1-dev/resolve/main/flux1-dev-fp8.safetensors"
 FLUX_DEV_NAME = "flux1-dev-fp8.safetensors"
@@ -36,14 +36,14 @@ FLUX_SCHNELL_URL = "https://huggingface.co/Comfy-Org/flux1-schnell/resolve/main/
 FLUX_SCHNELL_NAME = "flux1-schnell-fp8.safetensors"
 
 
-async def download_model(url: str, destination_path: str):
+async def download_model(url: str, destination_path: Path):
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
             if response.status == 200:
                 total_size = int(response.headers.get('Content-Length', 0))
                 chunk_size = 1024
-                with tqdm(total=total_size, unit='iB', unit_scale=True, desc=os.path.basename(destination_path)) as bar:
-                    with open(destination_path, "wb") as f:
+                with tqdm(total=total_size, unit='iB', unit_scale=True, desc=destination_path.name) as bar:
+                    with destination_path.open("wb") as f:
                         async for chunk in response.content.iter_chunked(chunk_size):
                             f.write(chunk)
                             bar.update(len(chunk))
@@ -52,8 +52,8 @@ async def download_model(url: str, destination_path: str):
 
 
 async def download_flux_dev():
-    dest_path = os.path.join(MODEL_CHECKPOINTS_DIR, FLUX_DEV_NAME)
-    if os.path.exists(dest_path):
+    dest_path = MODEL_CHECKPOINTS_DIR / FLUX_DEV_NAME
+    if dest_path.exists():
         logger.info(f"Flux Dev already downloaded.")
         return
     logger.info(f"Downloading Flux Dev...")
@@ -61,8 +61,8 @@ async def download_flux_dev():
 
 
 async def download_flux_schnell():
-    dest_path = os.path.join(MODEL_CHECKPOINTS_DIR, FLUX_SCHNELL_NAME)
-    if os.path.exists(dest_path):
+    dest_path = MODEL_CHECKPOINTS_DIR / FLUX_SCHNELL_NAME
+    if dest_path.exists():
         logger.info(f"Flux Schnell already downloaded.")
         return
     logger.info(f"Downloading Flux Schnell...")
@@ -70,8 +70,12 @@ async def download_flux_schnell():
 
 
 async def main():
-    if not os.path.exists(COMFYUI_DIR):
+    if not COMFYUI_DIR.exists():
         logger.error(f"ComfyUI directory not found.")
+        return
+
+    if not MODEL_CHECKPOINTS_DIR.exists():
+        logger.error(f"Model checkpoints directory not found.")
         return
 
     while True:
@@ -85,13 +89,12 @@ async def main():
         else:
             print("Invalid choice. Please enter 1, 2, or 3.")
 
-    if choice == '1':
+    if choice == "1":
         await download_flux_dev()
-    elif choice == '2':
+    elif choice == "2":
         await download_flux_schnell()
-    elif choice == '3':
+    elif choice == "3":
         await asyncio.gather(download_flux_dev(), download_flux_schnell())
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     asyncio.run(main())
